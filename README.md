@@ -1,2 +1,3 @@
 # ExoPlayerAndroidSample
-A basic implementation of exo player api
+A basic implementation of Exo Player Api with notification panel controller
+
