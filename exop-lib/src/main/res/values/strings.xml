@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">ExoPlayer Test</string>
+  <string name="player_activity_name">Media player</string>
+  <string name="media_url_mp3">"http link"</string>
+  <string name="media_url_mp4">"http link"</string>
+  <string name="media_url_dash">"dash"</string>
+</resources>
