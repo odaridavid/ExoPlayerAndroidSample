@@ -16,10 +16,14 @@
 package com.example.exoplayer;
 
 import android.annotation.SuppressLint;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -65,8 +69,9 @@ public class PlayerActivity extends AppCompatActivity {
             new DefaultBandwidthMeter();
     private ComponentListener componentListener;
     private MediaSessionCompat mediaSessionCompat;
-    private PlaybackStateCompat.Builder mediaControllerCompat;
+    private PlaybackStateCompat.Builder mediaPlaybackState;
     private static final String NOTIFICATION_CHANNEL_ID = "music_notification";
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +83,13 @@ public class PlayerActivity extends AppCompatActivity {
         mediaSessionCompat = new MediaSessionCompat(this, TAG);
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mediaSessionCompat.setMediaButtonReceiver(null);
-        mediaControllerCompat = new PlaybackStateCompat.Builder()
+        mediaPlaybackState = new PlaybackStateCompat.Builder()
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
                                 PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_STOP |
                                 PlaybackStateCompat.ACTION_REWIND | PlaybackStateCompat.ACTION_FAST_FORWARD
                 );
-        mediaSessionCompat.setPlaybackState(mediaControllerCompat.build());
+        mediaSessionCompat.setPlaybackState(mediaPlaybackState.build());
         mediaSessionCompat.setCallback(new MediaCallback());
         mediaSessionCompat.setActive(true);
 
@@ -193,10 +198,51 @@ public class PlayerActivity extends AppCompatActivity {
     public void displayNotification(PlaybackStateCompat state) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
 
+        int icon;
+        String play_pause;
+        if (state.getState() == PlaybackStateCompat.STATE_PLAYING) {
+            icon = R.drawable.exo_controls_pause;
+            play_pause = getString(R.string.pause);
+        } else {
+            icon = R.drawable.exo_controls_play;
+            play_pause = getString(R.string.play);
+        }
+
+        NotificationCompat.Action playPauseAction = new NotificationCompat.Action(
+                icon,
+                play_pause,
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE));
+        NotificationCompat.Action restartAction = new NotificationCompat.Action(
+                R.drawable.exo_icon_previous,
+                getString(R.string.restart),
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
+        NotificationCompat.Action restartActionNext = new NotificationCompat.Action(
+                R.drawable.exo_icon_next,
+                getString(R.string.restart),
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
+
+        PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, PlayerActivity.class), 0);
+
+        builder.setContentTitle("Exo Player Testing")
+                .setContentText("Google Glass")
+                .setContentIntent(contentPendingIntent)
+                .setSmallIcon(R.drawable.exo_notification_small_icon)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .addAction(restartAction)
+                .addAction(playPauseAction)
+                .addAction(restartActionNext)
+                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(mediaSessionCompat.getSessionToken())
+                        .setShowActionsInCompactView(0, 1));
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(0, builder.build());
+
+
     }
 
     private void releasePlayer() {
         if (player != null) {
+            notificationManager.cancelAll();
             playbackPosition = player.getCurrentPosition();
             currentWindow = player.getCurrentWindowIndex();
             playWhenReady = player.getPlayWhenReady();
@@ -240,25 +286,27 @@ public class PlayerActivity extends AppCompatActivity {
             switch (playbackState) {
                 case Player.STATE_IDLE:
                     stateString = "ExoPlayer.STATE_IDLE      -";
-                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_NONE, player.getContentPosition(), 1f);
+                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_NONE, player.getContentPosition(), 1f);
                     break;
                 case Player.STATE_BUFFERING:
-                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_BUFFERING, player.getContentPosition(), 1f);
+                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_BUFFERING, player.getContentPosition(), 1f);
                     stateString = "ExoPlayer.STATE_BUFFERING -";
                     break;
                 case Player.STATE_READY:
-                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_PLAYING, player.getContentPosition(), 1f);
+                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_PLAYING, player.getContentPosition(), 1f);
                     stateString = "ExoPlayer.STATE_READY     -";
                     break;
                 case Player.STATE_ENDED:
-                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_STOPPED, player.getContentPosition(), 1f);
+                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_STOPPED, player.getContentPosition(), 1f);
                     stateString = "ExoPlayer.STATE_ENDED     -";
                     break;
                 default:
+                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_STOPPED, player.getContentPosition(), 1f);
                     stateString = "UNKNOWN_STATE             -";
                     break;
             }
-            mediaSessionCompat.setPlaybackState(mediaControllerCompat.build());
+            mediaSessionCompat.setPlaybackState(mediaPlaybackState.build());
+            displayNotification(mediaPlaybackState.build());
             Log.d(TAG, "changed state to " + stateString
                     + " playWhenReady: " + playWhenReady);
         }
