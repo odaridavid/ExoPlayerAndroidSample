@@ -18,6 +18,8 @@ package com.example.exoplayer;
 import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -68,7 +70,7 @@ public class PlayerActivity extends AppCompatActivity {
     private static final DefaultBandwidthMeter BANDWIDTH_METER =
             new DefaultBandwidthMeter();
     private ComponentListener componentListener;
-    private MediaSessionCompat mediaSessionCompat;
+    private static MediaSessionCompat mediaSessionCompat;
     private PlaybackStateCompat.Builder mediaPlaybackState;
     private static final String NOTIFICATION_CHANNEL_ID = "music_notification";
     private NotificationManager notificationManager;
@@ -233,7 +235,7 @@ public class PlayerActivity extends AppCompatActivity {
                 .addAction(restartActionNext)
                 .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(mediaSessionCompat.getSessionToken())
-                        .setShowActionsInCompactView(0, 1,2));
+                        .setShowActionsInCompactView(0, 1, 2));
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(0, builder.build());
 
@@ -336,6 +338,16 @@ public class PlayerActivity extends AppCompatActivity {
         @Override
         public void onSkipToPrevious() {
             super.onSkipToPrevious();
+        }
+    }
+
+    public static class MediaButtonNotification extends BroadcastReceiver {
+        public MediaButtonNotification() {
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            MediaButtonReceiver.handleIntent(mediaSessionCompat, intent);
         }
     }
 }
