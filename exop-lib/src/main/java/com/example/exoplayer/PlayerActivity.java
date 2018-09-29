@@ -214,11 +214,11 @@ public class PlayerActivity extends AppCompatActivity {
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE));
         NotificationCompat.Action restartAction = new NotificationCompat.Action(
                 R.drawable.exo_icon_previous,
-                getString(R.string.restart),
+                getString(R.string.previous),
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
         NotificationCompat.Action restartActionNext = new NotificationCompat.Action(
                 R.drawable.exo_icon_next,
-                getString(R.string.restart),
+                getString(R.string.next),
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
 
         PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, PlayerActivity.class), 0);
@@ -233,7 +233,7 @@ public class PlayerActivity extends AppCompatActivity {
                 .addAction(restartActionNext)
                 .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(mediaSessionCompat.getSessionToken())
-                        .setShowActionsInCompactView(0, 1));
+                        .setShowActionsInCompactView(0, 1,2));
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(0, builder.build());
 
