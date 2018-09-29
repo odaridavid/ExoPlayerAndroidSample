@@ -246,7 +246,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void releasePlayer() {
         if (player != null) {
-            notificationManager.cancelAll();
+
             playbackPosition = player.getCurrentPosition();
             currentWindow = player.getCurrentWindowIndex();
             playWhenReady = player.getPlayWhenReady();
@@ -254,6 +254,9 @@ public class PlayerActivity extends AppCompatActivity {
             player.removeVideoListener(null);
             player.removeAnalyticsListener(componentListener);
             player.release();
+            if (notificationManager != null) {
+                notificationManager.cancelAll();
+            }
             player = null;
         }
     }
