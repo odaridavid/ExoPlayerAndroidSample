@@ -19,6 +19,9 @@ import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -61,6 +64,9 @@ public class PlayerActivity extends AppCompatActivity {
     private static final DefaultBandwidthMeter BANDWIDTH_METER =
             new DefaultBandwidthMeter();
     private ComponentListener componentListener;
+    private MediaSessionCompat mediaSessionCompat;
+    private PlaybackStateCompat.Builder mediaControllerCompat;
+    private static final String NOTIFICATION_CHANNEL_ID = "music_notification";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +75,19 @@ public class PlayerActivity extends AppCompatActivity {
         //Reference to Exo player view
         mPlayerView = findViewById(R.id.video_player_view);
         componentListener = new ComponentListener();
+        mediaSessionCompat = new MediaSessionCompat(this, TAG);
+        mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mediaSessionCompat.setMediaButtonReceiver(null);
+        mediaControllerCompat = new PlaybackStateCompat.Builder()
+                .setActions(
+                        PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_STOP |
+                                PlaybackStateCompat.ACTION_REWIND | PlaybackStateCompat.ACTION_FAST_FORWARD
+                );
+        mediaSessionCompat.setPlaybackState(mediaControllerCompat.build());
+        mediaSessionCompat.setCallback(new MediaCallback());
+        mediaSessionCompat.setActive(true);
+
     }
 
     private void initializePlayer() {
@@ -165,6 +184,17 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mediaSessionCompat.setActive(false);
+    }
+
+    public void displayNotification(PlaybackStateCompat state) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+
+    }
+
     private void releasePlayer() {
         if (player != null) {
             playbackPosition = player.getCurrentPosition();
@@ -210,22 +240,54 @@ public class PlayerActivity extends AppCompatActivity {
             switch (playbackState) {
                 case Player.STATE_IDLE:
                     stateString = "ExoPlayer.STATE_IDLE      -";
+                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_NONE, player.getContentPosition(), 1f);
                     break;
                 case Player.STATE_BUFFERING:
+                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_BUFFERING, player.getContentPosition(), 1f);
                     stateString = "ExoPlayer.STATE_BUFFERING -";
                     break;
                 case Player.STATE_READY:
+                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_PLAYING, player.getContentPosition(), 1f);
                     stateString = "ExoPlayer.STATE_READY     -";
                     break;
                 case Player.STATE_ENDED:
+                    mediaControllerCompat.setState(PlaybackStateCompat.STATE_STOPPED, player.getContentPosition(), 1f);
                     stateString = "ExoPlayer.STATE_ENDED     -";
                     break;
                 default:
                     stateString = "UNKNOWN_STATE             -";
                     break;
             }
+            mediaSessionCompat.setPlaybackState(mediaControllerCompat.build());
             Log.d(TAG, "changed state to " + stateString
                     + " playWhenReady: " + playWhenReady);
+        }
+    }
+
+    private class MediaCallback extends MediaSessionCompat.Callback {
+        @Override
+        public void onStop() {
+            super.onStop();
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+        }
+
+        @Override
+        public void onPlay() {
+            super.onPlay();
+        }
+
+        @Override
+        public void onSkipToNext() {
+            super.onSkipToNext();
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            super.onSkipToPrevious();
         }
     }
 }
