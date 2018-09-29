@@ -85,9 +85,11 @@ public class PlayerActivity extends AppCompatActivity {
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mediaPlaybackState = new PlaybackStateCompat.Builder()
                 .setActions(
-                        PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
-                                PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_STOP |
-                                PlaybackStateCompat.ACTION_REWIND | PlaybackStateCompat.ACTION_FAST_FORWARD
+                        PlaybackStateCompat.ACTION_PLAY |
+                                PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE |
+                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                 );
         mediaSessionCompat.setPlaybackState(mediaPlaybackState.build());
         mediaSessionCompat.setMediaButtonReceiver(null);
@@ -312,7 +314,7 @@ public class PlayerActivity extends AppCompatActivity {
         @Override
         public void onSkipToNext() {
             super.onSkipToNext();
-            player.seekTo(1000);
+            player.seekTo(0);
         }
 
         @Override
