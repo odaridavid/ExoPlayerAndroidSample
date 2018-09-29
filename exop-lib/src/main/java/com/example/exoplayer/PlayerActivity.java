@@ -198,7 +198,8 @@ public class PlayerActivity extends AppCompatActivity {
 
     public void displayNotification(PlaybackStateCompat state) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
-
+        NotificationChannelSupport notificationChannelSupport = new NotificationChannelSupport();
+        notificationChannelSupport.createNotificationChannel(this, NOTIFICATION_CHANNEL_ID);
         int icon;
         String play_pause;
         if (state.getState() == PlaybackStateCompat.STATE_PLAYING) {
