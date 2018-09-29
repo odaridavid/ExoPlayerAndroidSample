@@ -29,7 +29,6 @@ import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -84,7 +83,6 @@ public class PlayerActivity extends AppCompatActivity {
         componentListener = new ComponentListener();
         mediaSessionCompat = new MediaSessionCompat(this, TAG);
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-        mediaSessionCompat.setMediaButtonReceiver(null);
         mediaPlaybackState = new PlaybackStateCompat.Builder()
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
@@ -92,6 +90,7 @@ public class PlayerActivity extends AppCompatActivity {
                                 PlaybackStateCompat.ACTION_REWIND | PlaybackStateCompat.ACTION_FAST_FORWARD
                 );
         mediaSessionCompat.setPlaybackState(mediaPlaybackState.build());
+        mediaSessionCompat.setMediaButtonReceiver(null);
         mediaSessionCompat.setCallback(new MediaCallback());
         mediaSessionCompat.setActive(true);
 
@@ -284,60 +283,41 @@ public class PlayerActivity extends AppCompatActivity {
         @Override
         public void onPlayerStateChanged(boolean playWhenReady,
                                          int playbackState) {
-            String stateString;
-            switch (playbackState) {
-                case Player.STATE_IDLE:
-                    stateString = "ExoPlayer.STATE_IDLE      -";
-                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_NONE, player.getContentPosition(), 1f);
-                    break;
-                case Player.STATE_BUFFERING:
-                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_BUFFERING, player.getContentPosition(), 1f);
-                    stateString = "ExoPlayer.STATE_BUFFERING -";
-                    break;
-                case Player.STATE_READY:
-                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_PLAYING, player.getContentPosition(), 1f);
-                    stateString = "ExoPlayer.STATE_READY     -";
-                    break;
-                case Player.STATE_ENDED:
-                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_STOPPED, player.getContentPosition(), 1f);
-                    stateString = "ExoPlayer.STATE_ENDED     -";
-                    break;
-                default:
-                    mediaPlaybackState.setState(PlaybackStateCompat.STATE_STOPPED, player.getContentPosition(), 1f);
-                    stateString = "UNKNOWN_STATE             -";
-                    break;
+            if (playbackState == Player.STATE_READY && playWhenReady) {
+                mediaPlaybackState.setState(PlaybackStateCompat.STATE_PLAYING, player.getContentPosition(), 1f);
+
+            } else if (playbackState == Player.STATE_READY) {
+                mediaPlaybackState.setState(PlaybackStateCompat.STATE_PAUSED, player.getContentPosition(), 1f);
             }
             mediaSessionCompat.setPlaybackState(mediaPlaybackState.build());
             displayNotification(mediaPlaybackState.build());
-            Log.d(TAG, "changed state to " + stateString
-                    + " playWhenReady: " + playWhenReady);
         }
     }
 
     private class MediaCallback extends MediaSessionCompat.Callback {
-        @Override
-        public void onStop() {
-            super.onStop();
-        }
 
         @Override
         public void onPause() {
             super.onPause();
+            player.setPlayWhenReady(false);
         }
 
         @Override
         public void onPlay() {
             super.onPlay();
+            player.setPlayWhenReady(true);
         }
 
         @Override
         public void onSkipToNext() {
             super.onSkipToNext();
+            player.seekTo(1000);
         }
 
         @Override
         public void onSkipToPrevious() {
             super.onSkipToPrevious();
+            player.seekTo(0);
         }
     }
 
